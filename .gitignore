@@ -1,13 +1,27 @@
-#Fichies temporaires et du systèmes
-*. tmp
-*.10g
+# Fichiers temporaires et du système
+*.tmp
+*.log
+*.bak
+Thumbs.db
+desktop.ini
+.DS_Store
+
 # Paramètres locaux et secrets
-* env
-. env.*
+.env
+.env.*
+
 # Environnements Python et caches
-pycache/
-•venv/
+__pycache__/
+.venv/
 venv/
+
 # Répertoires de dépendances ou de compilation
 node_modules/
-chemin_vers_les_dossier_build
+build/
+cache/
+
+# Fichiers compilés Arduino
+*.hex
+*.elf
+*.bin
+*.o
