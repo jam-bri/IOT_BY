@@ -9,17 +9,22 @@ char pass[] = "72Hin@R*";
 
 #include <Wire.h>
 #include <DHT.h>
+#include <NTPClient.h>
 #include "rgb_lcd.h"
 #include "RTC.h"
 
 #define PIN_DHT A0 // broche du DHT22
 #define TYPE_DHT DHT22
 #define PIN_VIE 2 // led de vie
+#define DECALAGE_HORAIRE 7200 //declage horaire heure de paris +2h
 
 rgb_lcd lcd;
 DHT dht(PIN_DHT, TYPE_DHT);
 
+WiFiUDP ntpUDP;
+NTPClient ntp(ntpUDP, "192.168.1.254", DECALAGE_HORAIRE);
 
+bool ntpOk=false; // true si la derniere synchro a reussi
 
 unsigned long compteur=0; // 1 tour de loop = 500 ms
 
@@ -55,6 +60,20 @@ bool setup_wifi(){
   }
 }
 
+// synchro de l'heure avec le serveur NTP, renvoie true si ok
+bool synchro_ntp(){
+  if (WiFi.status()!=WL_CONNECTED){
+    return false;
+  }
+  if (ntp.update()){
+    RTCTime heureNTP(ntp.getEpochTime());
+    RTC.setTime(heureNTP);
+    Serial.println("Synchro NTP ok");
+    return true;
+  }
+  Serial.println("Echec synchro NTP");
+  return false;
+}
 void setup() {
   Serial.begin(9600);
   pinMode(PIN_VIE, OUTPUT);
@@ -64,6 +83,8 @@ void setup() {
   RTCTime depart(21, Month::OCTOBER, 2026, 14, 0, 0, DayOfWeek::WEDNESDAY, SaveLight::SAVING_TIME_INACTIVE);
   RTC.setTime(depart);
   bool wifiOk = setup_wifi();
+  ntp.begin();
+  ntpOk = synchro_ntp();
 
   // ecran d'accueil : version + date, puis adresse IP
   RTCTime maintenant;
@@ -107,6 +128,9 @@ void setup() {
     lcd.print("Pas de wifi");
     Serial.println("Pas de wifi");
   }
+
+  delay(3000); // ecran d'accueil 3 s
+  lcd.clear();
 }
 
 void loop(){
@@ -120,4 +144,59 @@ void loop(){
     etatVie=LOW;
   }
   digitalWrite(PIN_VIE, etatVie);
+
+  if (compteur%120==0){
+  ntpOk = synchro_ntp();
+  }
+
+  // date et heure toutes les 1000 ms = 2 tours
+  if (compteur%2==0){
+    lcd.setCursor(0, 0);
+    if (ntpOk){
+      RTCTime maintenant;
+      RTC.getTime(maintenant);
+      lcd.print(maintenant.getDayOfMonth());
+      lcd.print("/");
+      lcd.print(Month2int(maintenant.getMonth()));
+      lcd.print("/");
+      lcd.print(maintenant.getYear()%100);
+      lcd.print(" ");
+      if (maintenant.getHour()<10) lcd.print("0");
+      lcd.print(maintenant.getHour());
+      lcd.print(":");
+      if (maintenant.getMinutes()<10) lcd.print("0");
+      lcd.print(maintenant.getMinutes());
+      lcd.print(":");
+      if (maintenant.getSeconds()<10) lcd.print("0");
+      lcd.print(maintenant.getSeconds());
+      lcd.print("  ");
+    }else{
+      lcd.print("Pas de synchro  ");
+    }
+  }
+
+  // mesure toutes les 2000 ms = 4 tours
+  if (compteur%4==0){
+    float t = dht.readTemperature();
+    float h = dht.readHumidity();
+    if (!isnan(t) && !isnan(h)){
+      temp=t;
+      hum=h;
+    }
+
+    // envoi sur le port serie
+    Serial.print("T ");
+    Serial.print(temp, 1);
+    Serial.print("oC/H ");
+    Serial.print(hum, 1);
+    Serial.println("%");
+
+    // ligne 2 : temperature et humidite
+    lcd.setCursor(0, 1);
+    lcd.print("T ");
+    lcd.print(temp, 1);
+    lcd.print("oC/H ");
+    lcd.print(hum, 1);
+    lcd.print("%  ");
+  }
 }
