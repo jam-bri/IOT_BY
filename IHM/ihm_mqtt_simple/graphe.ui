@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GraphWindow</class>
+ <widget class="QDialog" name="GraphWindow">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>700</width><height>560</height></rect>
+  </property>
+  <property name="windowTitle">
+   <string>Courbes du capteur</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="layoutDates">
+     <item><widget class="QLabel" name="lblDebut"><property name="text"><string>Début</string></property></widget></item>
+     <item><widget class="QDateTimeEdit" name="dteStartTime"><property name="displayFormat"><string>yyyy-MM-dd HH:mm:ss</string></property></widget></item>
+     <item><widget class="QLabel" name="lblFin"><property name="text"><string>Fin</string></property></widget></item>
+     <item><widget class="QDateTimeEdit" name="dteEndTime"><property name="displayFormat"><string>yyyy-MM-dd HH:mm:ss</string></property></widget></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGraphicsView" name="graphicsView"/>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="layoutBoutons">
+     <item><widget class="QPushButton" name="btnClearData"><property name="text"><string>Effacer les courbes</string></property></widget></item>
+     <item><widget class="QPushButton" name="btnLoadData"><property name="text"><string>Charger les données</string></property></widget></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+     <property name="standardButtons"><set>QDialogButtonBox::StandardButton::Close</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>GraphWindow</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>
