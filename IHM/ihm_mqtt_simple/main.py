@@ -1,6 +1,7 @@
 import sys
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QRegularExpression
+from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import QApplication, QMainWindow
 
 from client_mqtt import ClientMQTT
@@ -28,6 +29,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btnConnect.clicked.connect(self.connectMQTT)
         self.btnDisconnect.clicked.connect(self.disconnectMQTT)
         self.actionQuit.triggered.connect(self.close)
+        self.btnSynchroDateTime.clicked.connect(self.synchroDateTime)
+        self.btnStartMeasure.clicked.connect(self.startMeasure)
+        self.btnStopMeasure.clicked.connect(self.stopMeasure)
+        self.btnFastBlink.clicked.connect(self.fastBlink)
+        self.btnSlowBlink.clicked.connect(self.slowBlink)
+        self.btnBlink.clicked.connect(self.customBlink)
+        self.lneBargraph.returnPressed.connect(self.setBargraph)
+
+        # saisie contrôlée : 0 à 1023 pour le bargraphe, nombre pour la période
+        self.lneBargraph.setValidator(QRegularExpressionValidator(
+            QRegularExpression(r"^(\d{1,3}|10[01]\d|102[0-3])$")))
+        self.lnePeriod.setValidator(QRegularExpressionValidator(QRegularExpression(r"^\d{3,5}$")))
 
         self.etat_boutons(connecte=False)
         self.statusbar.showMessage("Non connecté")
@@ -74,6 +87,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.mqtt.disconnect_mqtt()
         self.etat_boutons(connecte=False)
         self.statusbar.showMessage("Déconnecté")
+        
+    # ---------- commandes ----------
+    def commande(self, code):
+        self.mqtt.publish_mqtt(f"/iot/COMMAND_{self.id_pc}", str(code))
+
+    def synchroDateTime(self):
+        self.commande(10)
+
+    def startMeasure(self):
+        self.commande(20)
+        self.commande(50)        # mesure démarrée => clignotement rapide
+
+    def stopMeasure(self):
+        self.commande(30)
+        self.commande(40)        # mesure arrêtée => clignotement lent
+
+    def fastBlink(self):
+        self.commande(50)
+
+    def slowBlink(self):
+        self.commande(40)
+
+    def customBlink(self):
+        periode = self.lnePeriod.text()
+        if periode:
+            self.mqtt.publish_mqtt(f"/iot/BLINK_{self.id_pc}", periode)
+            self.commande(60)
+
+    def setBargraph(self):
+        valeur = self.lneBargraph.text()
+        if valeur:
+            self.mqtt.publish_mqtt(f"/iot/BARGRAPH_{self.id_pc}", valeur)
 
     # appelé à la fermeture de la fenêtre (croix ou Quitter)
     def closeEvent(self, event):
