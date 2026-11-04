@@ -30,28 +30,31 @@ Le dépôt suit la construction progressive du capteur IdO **TempHumiX** :
 IOT_BY/
 ├── .gitignore                  # fichiers exclus (temporaires, secrets, .hex/.elf/.bin...)
 ├── README.md
-└── SIMULIDE/
-    ├── clignotement_led/
-    │   ├── clignotement_led.ino
-    │   └── clignotement_led.sim1
-    ├── bargraphe/
-    │   ├── bargraphe.ino
-    │   └── bargraphe.sim1
-    ├── capteur_dht22/
-    │   ├── capteur_dht22.ino
-    │   └── capteur_dht22.sim1
-    ├── lcd_i2c/
-    │   ├── lcd_i2c.ino
-    │   └── lcd_i2c.sim1
-    ├── lcd_i2c_dht22/
-    │   ├── lcd_i2c_dht22.ino
-    │   └── lcd_i2c_dht22.sim1
+├── SIMULIDE/                   # Partie 1 : simulation (Arduino Uno sous SimulIDE)
+│   ├── clignotement_led/
+│   │   ├── clignotement_led.ino
+│   │   └── clignotement_led.sim1
+│   ├── bargraphe/
+│   │   ├── bargraphe.ino
+│   │   └── bargraphe.sim1
+│   ├── capteur_dht22/
+│   │   ├── capteur_dht22.ino
+│   │   └── capteur_dht22.sim1
+│   ├── lcd_i2c/
+│   │   ├── lcd_i2c.ino
+│   │   └── lcd_i2c.sim1
+│   ├── lcd_i2c_dht22/
+│   │   ├── lcd_i2c_dht22.ino
+│   │   └── lcd_i2c_dht22.sim1
+│   └── TempHumiX/
+│       ├── TempHumiX.ino       # TempHumiX simulé (Uno : LED de vie, dateur, DHT22, LCD, série)
+│       └── TempHumiX.sim1      # circuit SimulIDE correspondant
+└── TP_PRATIQUE/                # Partie 2 : carte réelle Arduino UNO R4 WiFi
     └── TempHumiX/
-        ├── TempHumiX.ino       # programme final (version connectée UNO R4 WiFi)
-        └── TempHumiX.sim1      # circuit SimulIDE (version Uno simulée)
+        └── TempHumiX.ino       # TempHumiX connecté (RTC, WiFi, NTP, MQTT)
 ```
 
-Chaque dossier contient un circuit SimulIDE (`.sim1`) et le programme Arduino (`.ino`) associé.
+Dans `SIMULIDE/`, chaque dossier contient un circuit SimulIDE (`.sim1`) et le programme Arduino (`.ino`) associé. `TP_PRATIQUE/` ne contient que du code : il se téléverse sur la carte réelle.
 
 ## Exercices de simulation
 
@@ -62,11 +65,11 @@ Chaque dossier contient un circuit SimulIDE (`.sim1`) et le programme Arduino (`
 | [capteur_dht22](SIMULIDE/capteur_dht22/capteur_dht22.ino) | Toutes les 2 s : LED verte si T < 20 °C, sinon LED rouge | DHT22 : A0, verte : 3, rouge : 12 | DHT |
 | [lcd_i2c](SIMULIDE/lcd_i2c/lcd_i2c.ino) | Affiche « HELLO » / « WORLD » sur un LCD 16x2 I2C (adresse `0x3E`) | SDA : A4, SCL : A5 | LiquidCrystal AIP31068 |
 | [lcd_i2c_dht22](SIMULIDE/lcd_i2c_dht22/lcd_i2c_dht22.ino) | Ligne 1 : « IMT NE - PPI », ligne 2 : température et humidité au dixième | DHT22 : A0, LCD I2C | DHT, LiquidCrystal AIP31068 |
-| [TempHumiX](SIMULIDE/TempHumiX/TempHumiX.ino) | Capteur final (voir ci-dessous) | voir ci-dessous | voir ci-dessous |
+| [TempHumiX](SIMULIDE/TempHumiX/TempHumiX.ino) | TempHumiX simulé : LED de vie, dateur logiciel, mesure DHT22, affichage LCD et port série | LED de vie : 2, DHT22 : A0, LCD I2C | DHT, LiquidCrystal AIP31068 |
 
 ## TempHumiX — version connectée
 
-> Le circuit [TempHumiX.sim1](SIMULIDE/TempHumiX/TempHumiX.sim1) correspond à la première version simulée sur Arduino Uno (LED de vie, dateur, DHT22, LCD, port série). Le programme actuel [TempHumiX.ino](SIMULIDE/TempHumiX/TempHumiX.ino) cible la carte réelle **UNO R4 WiFi**.
+> Programme : [TP_PRATIQUE/TempHumiX/TempHumiX.ino](TP_PRATIQUE/TempHumiX/TempHumiX.ino), pour la carte réelle **UNO R4 WiFi**. Il reprend le TempHumiX simulé ([SIMULIDE/TempHumiX](SIMULIDE/TempHumiX/)) et le transforme en objet connecté.
 
 ### Matériel
 
@@ -147,7 +150,7 @@ mosquitto_pub -h 192.168.1.1 -u <utilisateur> -P <mot_de_passe> -t "/iot/BARGRAP
 ```
 
 ### Configuration
-Le SSID, le mot de passe WiFi et les identifiants MQTT sont définis en tête de [TempHumiX.ino](SIMULIDE/TempHumiX/TempHumiX.ino). Pour tester le WiFi 5 GHz, commenter la ligne du SSID 2,4 GHz et décommenter celle du SSID 5G.
+Le SSID, le mot de passe WiFi et les identifiants MQTT sont définis en tête de [TempHumiX.ino](TP_PRATIQUE/TempHumiX/TempHumiX.ino). Pour tester le WiFi 5 GHz, commenter la ligne du SSID 2,4 GHz et décommenter celle du SSID 5G.
 
 ## Prérequis
 
@@ -172,7 +175,7 @@ Le SSID, le mot de passe WiFi et les identifiants MQTT sont définis en tête de
 
 **Carte réelle (UNO R4 WiFi)**
 1. Se placer sur la branche `tp_pratique`.
-2. Adapter si besoin la configuration WiFi / MQTT en tête de `TempHumiX.ino`.
+2. Ouvrir `TP_PRATIQUE/TempHumiX/TempHumiX.ino` et adapter si besoin la configuration WiFi / MQTT en tête du fichier.
 3. Sélectionner la carte *Arduino UNO R4 WiFi*, téléverser.
 4. Ouvrir le moniteur série à 9600 bauds pour suivre la connexion et les mesures.
 
