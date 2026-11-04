@@ -1,3 +1,5 @@
+import sqlite3
+from datetime import datetime
 from paho.mqtt import client as mqtt_client
 
 
@@ -14,6 +16,10 @@ class ClientMQTT:
         self.date_IdO = "-"
         self.temperature = None
         self.humidite = None
+        self.id_capteur = None
+
+        self.conn = None
+        self.tablename = None
 
     # 3.2.1 - connexion au broker
     def connect_mqtt(self) -> mqtt_client:
@@ -44,6 +50,7 @@ class ClientMQTT:
         def on_message(client, userdata, msg):
             valeur = msg.payload.decode()
             nom = msg.topic.upper()            # marche avec /iot/TEMPERATURE_ et /iot/temperature_
+            self.id_capteur = int(msg.topic.split("_")[-1])
             if "VERSION_" in nom:
                 self.version = valeur
             elif "GET_DATE_" in nom:
@@ -52,14 +59,41 @@ class ClientMQTT:
                 self.temperature = float(valeur)
             elif "HUMIDITY_" in nom:
                 self.humidite = float(valeur)
+                self.save_sqlite()
 
         self.client.subscribe(topic, qos)
         self.client.on_message = on_message
         print(f"Attente du topic : `{topic}`")
 
-    # 3.2.5 - attente des messages
+    # attente des messages
     def wait_mqtt(self, timeout=0):
         if timeout == 0:
             self.client.loop_forever()
         else:
             self.client.loop(timeout=timeout)
+
+    # ---------- SQLite---------
+    def connect_sqlite(self, dbname="IOT.db", tablename="IOT_DATA"):
+        self.conn = sqlite3.connect(dbname)
+        self.tablename = tablename
+        self.conn.cursor().execute(
+            f"CREATE TABLE IF NOT EXISTS {tablename} "
+            "(Id_capteur integer, Date text, Version text, Temperature real, Humidite real)")
+        self.conn.commit()
+        print(f"Base SQLite ouverte : {dbname} / table {tablename}")
+
+    def disconnect_sqlite(self):
+        if self.conn is not None:
+            self.conn.close()
+            self.conn = None
+            print("Base SQLite fermée")
+
+    def save_sqlite(self):
+        if self.conn is None or self.temperature is None or self.date_IdO == "-":
+            return
+        # le capteur envoie JJ/MM/AAAA HH:MM:SS ; on stocke AAAA-MM-JJ HH:MM:SS pour pouvoir trier et filtrer
+        date_iso = datetime.strptime(self.date_IdO, "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+        self.conn.cursor().execute(
+            f"INSERT INTO {self.tablename} VALUES (?,?,?,?,?)",
+            (self.id_capteur, date_iso, self.version, self.temperature, self.humidite))
+        self.conn.commit()
