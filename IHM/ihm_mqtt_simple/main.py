@@ -8,6 +8,8 @@ from client_mqtt import ClientMQTT
 from thread_mqtt import ThreadMQTT
 from mon_ihm import Ui_MainWindow
 
+from dialogue_courbe import CourbeDialog
+
 username = 'mos_user'
 password = 'mos_user'
 
@@ -27,6 +29,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # signal (clic) -> slot (méthode appelée)
         self.btnConnect.clicked.connect(self.connectMQTT)
+        self.btnGraph.clicked.connect(self.showGraph)
         self.btnDisconnect.clicked.connect(self.disconnectMQTT)
         self.actionQuit.triggered.connect(self.close)
         self.btnSynchroDateTime.clicked.connect(self.synchroDateTime)
@@ -87,7 +90,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.mqtt.disconnect_mqtt()
         self.etat_boutons(connecte=False)
         self.statusbar.showMessage("Déconnecté")
-        
+
     # ---------- commandes ----------
     def commande(self, code):
         self.mqtt.publish_mqtt(f"/iot/COMMAND_{self.id_pc}", str(code))
@@ -119,6 +122,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         valeur = self.lneBargraph.text()
         if valeur:
             self.mqtt.publish_mqtt(f"/iot/BARGRAPH_{self.id_pc}", valeur)
+
+    # ---------- courbes ----------
+    def showGraph(self):
+        dialogue = CourbeDialog(self.id_pc or 42914)
+        dialogue.exec()
 
     # appelé à la fermeture de la fenêtre (croix ou Quitter)
     def closeEvent(self, event):
