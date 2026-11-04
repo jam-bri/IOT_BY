@@ -25,3 +25,8 @@ cache/
 *.elf
 *.bin
 *.o
+
+.venv/
+__pycache__/
+*.pyc
+*.db

@@ -1,0 +1,19 @@
+[project]
+name = "ihm-temphumix"
+version = "1.0.0"
+description = "IHM d'acquisition et d'archivage du capteur IdO TempHumiX (MQTT, PySide6, SQLite)"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "paho-mqtt>=2.1",
+    "PySide6>=6.8",
+    "matplotlib>=3.9",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "amqtt>=0.12.1",
+]
